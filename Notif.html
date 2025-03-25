@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifikasi Telegram - DéliBo Store</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f8f8f8;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        #notif-container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .notif {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .notif:last-child {
+            border-bottom: none;
+        }
+        .notif strong {
+            color: #007bff;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Notifikasi Bot Delibo</h2>
+    <div id="notif-container">
+        <h3>Pesan Masuk</h3>
+        <div id="notif-list">Memuat...</div>
+        
+        <h3>Kirim Balasan</h3>
+        <input type="text" id="chatId" placeholder="Masukkan ID User">
+        <input type="text" id="message" placeholder="Masukkan pesan">
+        <button onclick="sendMessage()">Kirim Pesan</button>
+    </div>
+
+    <script>
+        const BOT_TOKEN = "7314362724:AAGObx-oh4d0sz8MsyRdB0W6qwLHqb3XY58"; // Ganti dengan token bot
+        const CHAT_ADMIN = "6450551010";  // Ganti dengan ID admin
+
+        // Fungsi untuk mengambil pesan masuk
+        function fetchNotifications() {
+            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates`)
+                .then(response => response.json())
+                .then(data => {
+                    let messages = data.result;
+                    let notifList = document.getElementById("notif-list");
+                    notifList.innerHTML = "";
+
+                    if (messages.length === 0) {
+                        notifList.innerHTML = "<p>Tidak ada pesan masuk.</p>";
+                        return;
+                    }
+
+                    messages.forEach(msg => {
+                        if (msg.message) {
+                            let userId = msg.message.chat.id;
+                            let text = msg.message.text || "(Tidak ada teks)";
+                            let name = msg.message.chat.first_name || "User";
+
+                            let notifItem = document.createElement("div");
+                            notifItem.classList.add("notif");
+                            notifItem.innerHTML = `<strong>${name} (${userId}):</strong> ${text}`;
+                            notifList.appendChild(notifItem);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching messages:", error);
+                    document.getElementById("notif-list").innerHTML = "<p>Gagal memuat pesan.</p>";
+                });
+        }
+
+        // Fungsi untuk mengirim pesan ke user
+        function sendMessage() {
+            let chatId = document.getElementById("chatId").value.trim();
+            let message = document.getElementById("message").value.trim();
+
+            if (!chatId || !message) {
+                alert("Masukkan ID user dan pesan!");
+                return;
+            }
+
+            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok) {
+                        alert("Pesan berhasil dikirim!");
+                        document.getElementById("message").value = "";
+                    } else {
+                        alert("Gagal mengirim pesan!");
+                    }
+                })
+                .catch(error => console.error("Error sending message:", error));
+        }
+
+        // Ambil pesan masuk setiap 5 detik
+        setInterval(fetchNotifications, 5000);
+        fetchNotifications();
+    </script>
+
+</body>
+</html>
